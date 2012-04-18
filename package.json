@@ -1,0 +1,37 @@
+{ "name": "github-connect",
+  "version": "0.1.0",
+  "description": "Use Github OAuth for access control",
+  "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
+  "main": "index",
+  "scripts": {
+    "start":  "node server.js"
+  },
+  "engines": {
+    "node": ">= 0.6.0"
+  },
+  "dependencies": {
+    "async":            "~0.1.18",
+    "coffee-script":    "~1.3.1",
+    "cookies":          "~0.2.2",
+    "connect":          "~1.8.6",
+    "express":          "~2.5.9",
+    "http-proxy":       "~0.8.0",
+    "keygrip":          "~0.2.0",
+    "request":          "~2.9.200",
+    "winston":          "~0.5.11"
+  },
+  "devDependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/assaf/github-connect"
+  },
+  "bugs": {
+    "url": "http://github.com/assaf/github-connect/issues"
+  },
+  "licenses": [
+    { "type": "MIT",
+      "url": "http://github.com/assaf/github-connect/blob/master/MIT-LICENSE"
+    }
+  ]
+}
