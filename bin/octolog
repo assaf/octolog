@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* vim: set filetype=javascript : */
 var Coffee  = require("coffee-script"),
     File    = require("fs");
 
@@ -8,12 +9,13 @@ var USAGE = ""
   + "  Usage: octolog [options] config-file\n"
   + "\n"
   + "  Options:\n"
-  + "    -p, --port               port to listen to (defaults to 80 or 443)\n"
   + "    -v, --version            show version number\n"
   + "    -h, --help               show this help page\n"
   ;
 
 
+
+// Parse command line arguments.
 var args = process.argv.slice(2),
     arg,
     filename,
@@ -33,21 +35,19 @@ while (arg = args.shift()) {
       process.stdout.write("Version " + version + "\n");
       process.exit(0);
       break;
-    case '-p':
-    case '--port':
-      port = parseInt(args.shift(), 10);
-      break;
     default:
       filename = arg;
   }
 }
 
+// Need a configuration filename to proceed.
 if (!filename) {
   process.stderr.write(USAGE);
   process.exit(1);
 }
 
 
+// Teach Node how to load CoffeeScript files, the rest of the code is CS.
 if (!require.extensions[".coffee"]) {
   require.extensions[".coffee"] = function(module, filename) {
     var source = coffee.compile(File.readFileSync(filename, "utf8"));
@@ -55,10 +55,14 @@ if (!require.extensions[".coffee"]) {
   }
 }
 
+// Load the configuration file.
 var json = File.readFileSync(filename, "utf-8"),
     proxy = require(__dirname + "/../lib/proxy.coffee"),
     config;
 
+// Parse the configuration file, catch the exception and print it out so it
+// makes sense, otherwise every JSON error (like missing comma or closing brace)
+// looks like a bug it the code.
 try {
   config = JSON.parse(json);
 } catch (error) {
@@ -66,8 +70,6 @@ try {
   process.exit(2);
 }
 
-if (port)
-  config.port = port;
-
+// Do it!
 proxy(config);
 

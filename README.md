@@ -88,13 +88,17 @@ If the user authenticates, your application will see the following HTTP headers:
 
 ## Configuration
 
-The configuration options are:
+The configuration options are as follows:
 
+* `port` - The port this proxy is listening on.  Defaults to 80 (HTTP) or 443
+  (HTTPS).
+* `ssl` - If you want to use SSL (HTTPS), set `ssl.key` and `ssl.cert` to the
+  paths of the SSL key and certificate files respectively.
 * `application` - The URL for the application you're proxying.  Must specify the
-  protocol, hostname and port.
+  protocol, hostname and port, for example: "http://localhost:3000".
 * `protect` - Request paths that require authentication.  Can be a string or an
-  array of strings.  An empty array is allowed.  However, if not specified, the
-  default behavior is to protect all URLs (same as `["*"]`).
+  array of strings.  If not specified, the default behavior is to protect all
+  URLs (same as `["*"]`).
 * `authorize.logins` - Authorize all users listed by their Github login.  Can be
   string or array of strings.
 * `authorize.teams` - Authorize all teams listed by their team identifier.  Can
@@ -114,6 +118,23 @@ The callback URL must be the same protocol, host and port as the proxy server.
 For example, the test application is registered with the callback URL of
 `http://localhost:8000`, and so you can only use it when the proxy is running on
 localhost port 8000.
+
+When specifying which resources to protect:
+- Exact paths are matched against the URL.
+- Partial matches are allowed by ending the path with `*`.
+- You can require authentication for a path by prefixing it with `+`
+- You can ignore authentication for a path by prefixing it with `-`
+- The first match takes precedence
+
+For example, to require authentication for all paths except API and home page:
+
+```
+"protect": [
+  "-/",
+  "-/api",
+  "*"
+]
+```
 
 
 ## Connect/Express Middleware
