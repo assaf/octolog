@@ -7,6 +7,7 @@ Request       = require("request")
 URL           = require("url")
 logger        = require("./logger")
 octolog       = require("./octolog")
+Util          = require("./util")
 { HttpProxy } = require("http-proxy")
 
 ###
@@ -28,13 +29,40 @@ HEADERS =
   "x-github-token":     "token"
 
 
+# This function returns a function matcher that, when called with a pathname,
+# will return true if it matches the argument.
+matcher = (match)->
+  if match[match.length - 1] == "*"
+    match = match.slice(0, match.length - 1)
+    return (path)->
+      return path.slice(0, match.length) == match
+  else
+    return (path)->
+      return path == match
+
+# This function returns an object consisting of a matcher (property match) and a
+# protect flag (property protect) indicating whether or not to protect access to
+# the resource.  That matcher is a function called with a pathname and returns
+# true or false.
+mapPath = (path)->
+  if path[0] == "-"
+    return { match: matcher(path.slice(1)), protect: false }
+  else if path[0] == "+"
+    return { match: matcher(path.slice(1)), protect: true }
+  else
+    return { match: matcher(path), protect: true }
+
+
 # This function creates and starts up a new HTTP(S) proxy server
 proxy = (config)->
   unless config.application
     throw new Error("Expecting application URL (config.application)")
 
+  # The protected resources
+  paths = Util.toArray(config.protect || "*").map((p)-> mapPath(p))
+
+
   # Logging
-  config.logger = logger
   if config.syslog
     logger.add logger.transports.Syslog, config.syslog
 
@@ -68,8 +96,34 @@ proxy = (config)->
       end_fn.apply(res, arguments)
     next()
 
+
   # Authentication, authorization and all that jazz
-  server.use octolog(config)
+  server.use octolog(config, logger)
+
+
+  # Manage paths that require authentication
+  server.use (req, res, next)->
+    pathname = URL.parse(req.url).pathname
+    if user = req._user
+      next()
+      return
+
+    for path in paths
+      # Look for and stop at the first match
+      if path.match(pathname)
+        if path.protect
+          # This path requires authentication
+          res.setHeader "Location", Util.url(config, req, "/_octolog/connect")
+          res.statusCode = 303 # Follow URL with a GET request
+          res.end("You need to login with Github and authorize to access this page")
+        else
+          # This path does not require authentication, we're all good
+          next()
+        return
+
+    # We're good
+    next()
+      
 
   # Proxy request to back-end application
   server.use (req, res)->
@@ -86,9 +140,8 @@ proxy = (config)->
     rev_proxy.proxyRequest(req, res)
 
   # By default listen on port 80, 443 for HTTPS
-  port = config.port
-  port ||= 443 if https
-  server.listen port || 80, ->
+  port = Util.port(config)
+  server.listen port, ->
     logger.info "Listening in port #{port}"
 
   return server

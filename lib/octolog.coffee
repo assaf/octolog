@@ -3,6 +3,7 @@ Keygrip = require("keygrip")
 QS      = require("querystring")
 Request = require("request")
 URL     = require("url")
+Util    = require("./util")
 
 
 # The cookie name
@@ -15,19 +16,9 @@ CALLBACK_PATH = "/_octolog/callback"
 DISCONNECT_PATH = "/_octolog/disconnect"
 
 
-# Convert value to array of strings.  Value may be a string or null.
-toArray = (value)->
-  if value instanceof Array
-    return value.map((i)-> i.toString())
-  else if value
-    return [value.toString()]
-  else
-    return []
-
-
 # This is where the magic happen.  Given a configuration object, we get back a
 # Connect request handler.
-octolog = (config)->
+octolog = (config, logger)->
   # Validate configuration
   unless config.github.client_id
     throw new Error("OAuth not going to work without github.client_id")
@@ -35,16 +26,15 @@ octolog = (config)->
     throw new Error("OAuth not going to work without github.client_secret")
 
   # Authorize these logins and teams
-  logins = toArray(config.authorize.login)
-  teams = toArray(config.authorize.team)
+  logins = Util.toArray(config.authorize.login)
+  teams = Util.toArray(config.authorize.team)
   unless logins || teams
     throw new Error("You must authorize at least one user or team")
 
   # We use this to sign the cookies
-  keys = toArray(config.cookies?.secret)
+  keys = Util.toArray(config.cookies?.secret)
   keygrip = new Keygrip(keys)
 
-  logger = config.logger
   if logger
     if logins.length > 0
       logger.info "Authorized access to logins #{logins.join(", ")}"
@@ -66,7 +56,7 @@ octolog = (config)->
     # All this to get the return_to query parameter
     url = URL.parse(req.url)
     params = QS.parse(url.search?.slice(1))
-    return_to = params.return_to || "/"
+    return_to = params.return_to || Util.url(config, req, "/")
 
     res.setHeader "Location", return_to
     res.statusCode = 303 # Follow URL with a GET request
@@ -79,10 +69,7 @@ octolog = (config)->
     # specified by the query parameter or where they just came from
     params = QS.parse(url.search?.slice(1))
     return_to = params.return_to || req.headers.referer || "/"
-    # Make sure we redirect back on the right protocol, hostname and port
-    secure = res.socket?.encrypted || req.connection.proxySecure
-    protocol = if secure then "https" else "http"
-    redirect_uri = "#{protocol}://#{req.headers.host}#{CALLBACK_PATH}?return_to=#{return_to}"
+    redirect_uri = Util.url(config, req, CALLBACK_PATH, { return_to: return_to })
 
     # We need 'repo' scope to list team members
     scope = "repo" if teams.length > 0
