@@ -28,7 +28,7 @@ login is listed as authorized login.
 Now run the Octolog server with this configuration:
 
 ```
-./bin/octolog example/config.test.json -p 8000
+./bin/octolog example/config.test.json
 ```
 
 If you open your browser to [http://localhost:8000/](http://localhost:8000/) you

@@ -55,8 +55,19 @@ if (!require.extensions[".coffee"]) {
   }
 }
 
-var config = JSON.parse(File.readFileSync(filename, "utf-8")),
-    proxy = require(__dirname + "/../lib/proxy.coffee");
+var json = File.readFileSync(filename, "utf-8"),
+    proxy = require(__dirname + "/../lib/proxy.coffee"),
+    config;
 
-proxy(config).listen(port || 80);
+try {
+  config = JSON.parse(json);
+} catch (error) {
+  process.stderr.write(error.message + " in " + filename + "\n\n");
+  process.exit(2);
+}
+
+if (port)
+  config.port = port;
+
+proxy(config);
 

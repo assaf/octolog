@@ -3,6 +3,7 @@
     "/graphs*",
     "/settings*"
   ],
+  "port": 8000,
   "authorize": {
     "login": ["assaf"]
   },

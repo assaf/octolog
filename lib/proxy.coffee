@@ -28,7 +28,7 @@ HEADERS =
   "x-github-token":     "token"
 
 
-# This function creates and returns a new HTTP(S) proxy server
+# This function creates and starts up a new HTTP(S) proxy server
 proxy = (config)->
   unless config.application
     throw new Error("Expecting application URL (config.application)")
@@ -48,7 +48,13 @@ proxy = (config)->
   )
 
   # The Connect server
-  server = Connect.createServer()
+  if config.ssl
+    https =
+      key:  File.readFileSync(config.ssl.key, "utf8")
+      cert: File.readFileSync(config.ssl.cert, "utf8")
+    server = Connect.createServer(https)
+  else
+    server = Connect.createServer()
 
   # Log all requests.
   server.use (req, res, next)->
@@ -79,7 +85,12 @@ proxy = (config)->
     # Forward
     rev_proxy.proxyRequest(req, res)
 
-  # Next you can listen on this Connect server
+  # By default listen on port 80, 443 for HTTPS
+  port = config.port
+  port ||= 443 if https
+  server.listen port || 80, ->
+    logger.info "Listening in port #{port}"
+
   return server
 
 
