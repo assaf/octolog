@@ -1,10 +1,10 @@
 { "name": "octolog",
   "version": "0.1.0",
-  "description": "Github is out single sign-on master",
+  "description": "Github is our single sign-on octopus",
   "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
   "main": "index",
   "scripts": {
-    "start":  "node server.js"
+    "start":  "node server.js example/config.test.json"
   },
   "engines": {
     "node": ">= 0.6.0"

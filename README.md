@@ -65,7 +65,7 @@ For example:
     "/settings*"
   ],
   "authorize": {
-    "logins": ["assaf"]
+    "login": ["assaf"]
   },
   "github": {
     "client_id":      "8fa9b2a82cb28fb664a4",
