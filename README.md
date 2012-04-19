@@ -1,31 +1,54 @@
-# Github Connect
+# The Octolog
 
-Using Github to single sign-on our servers.
+Using Github for single sign-on.
 
 
 ## Say What?
 
-We have a bunch of different apps deployed on EC2: Graphite for metrics, Sensu
-for health checks, Kibana for logging, Vanity for split testing.  We wanted some
-way to manage access control on all of these, without having to manage different
-accounts on each service.
+We have a bunch of apps deployed on the cloud: Graphite for metrics, Sensu for
+checks, Kibana for logging, Vanity for split testing, and a few more.  We wanted
+some way to log into each service without having to manage accounts on each and
+every server.
 
-It came down to LDAP (yuck) and some SSO protocol like CAS or Webcookies (good?
-bad? we never got to find out), or OAuth against some service that allows us to
-maintain groups.  Like the group of all people who like to look at pretty
-graphs.
+We looked at open source SSO protocols like CAS, CoSign and Pubcookie but they
+all looked so ... complicated.  Editing XML files?  Setting up CGI scripts?
+Building code with Maven?  No thank you.
 
-Github does OAuth 2.0 (the easy OAuth) and version 3 of their API lets us check
-team membership.  Bang.  All we needed is an authorization reverse proxy and so
-Github Connect was born.
+What if there was an existing service users can authenticate with, and it uses
+OAuth so they can authorize individual application, and it has a way of editing
+users into roles, so we can manage access by role instead of individual logins? 
+
+Well, everyone on the team uses Github so they're already logged into that site,
+and Github supports OAuth 2.0 (the easy OAuth) and its V3 API allows us to check
+whether a person belongs to a team.  So all that's left is building a simple
+sign-on reverse proxy, and so Octolog was born.
+
+
+## How Does It Work?
+
+You setup Octolog as reverse proxy in front of your Web application, that same
+way you would use Nginx or Apache as reverse proxy, but with less to configure.
+
+Octolog supports HTTP/S 1.1 including wonderful features like streaming, Server
+Sent Events and Web Sockets.  Basically anything the wonderful
+[node-http-proxy](https://github.com/nodejitsu/node-http-proxy) can do.  And
+it's written in Node.js, so expect great performance and as many open
+connections as you need.
+
+When a request hits Octolog, it looks for a signed cookie that tells it you're
+authenticated and authorized.  If the cookie is not there, it redirects you to
+Github and asks you to login there and authorize the application.
+
+Github then redirects back to Octolog, which checks that the token is valid, and
+that you're account is listed as one of the authorized logins, or belongs to one
+of the authorized teams.
+
+If either checks passes, it sends back a signed cookie with account details and
+redirect you to the original request you made.  Since future requests will send
+back the same cookie, you are now authorized until the cookie expires.
 
 
 ## As A Proxy
-
-The easiest way to Github Connect your application is by running it as an HTTP/S
-reverse proxy.  GHC supports HTTP/S 1.1 including streaming, Server Sent Events
-and Web Sockets (basically anything the brilliant
-[node-http-proxy](https://github.com/nodejitsu/node-http-proxy) can do).
 
 To run as a proxy, create a configuration file with your Github application
 credentials, authorized logins/teams, and the URL of the proxied application.
@@ -95,15 +118,15 @@ localhost port 8000.
 
 ## Connect/Express Middleware
 
-Most of the logic is handled by the `ConnectMe` function which returns a Connect
+Most of the logic is handled by the `octolog` function which returns a Connect
 request handler.   You can use it inside your application instead of a proxy.
 
 For example:
 
 ```
-ConnectMe = require("github-connect")
+octolog = require("octolog")
 
-connect = ConnectMe({
+server.use octolog({
   authorize: {
     logins: "assaf"
   },
@@ -111,8 +134,7 @@ connect = ConnectMe({
     "client_id":      "8fa9b2a82cb28fb664a4",
     "client_secret":  "204093f4739fbe8e9b07cfa16b5cfd70fca5bf66"
   }
-})
-server.use connect
+});
 ```
 
 If the user is authenticated, the user object becomes available from the request
@@ -129,14 +151,14 @@ For example:
 </span>
 ```
 
-To get users to Github Connect, redirect them to `/_github/connect`, for example:
+To get users to Github connect, redirect them to `/_octolog/connect`, for example:
 
 ```
 function login(req, res, next) {
   if (req._user) {
     next();
   } else {
-    res.redirect("/_github/connect");
+    res.redirect("/_octolog/connect");
   }
 }
 
@@ -146,7 +168,7 @@ server.get("/settings", login, function(req, res) {
 ```
 
 You can also kick, I mean, log them out by redirecting the user to
-`_github/disconnect`.  Both redirects would take the user back to the URL they
+`_octolog/disconnect`.  Both redirects would take the user back to the URL they
 were redirected from.
 
 
