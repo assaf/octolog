@@ -130,7 +130,7 @@ octolog = (config, logger)->
             # Authorized based on Github team membership
             logIn(req, res, user)
           else
-            logger.warn "Denied access to #{user.name} (#{user.login})" if logger
+            logger.warning "Denied access to #{user.name} (#{user.login})" if logger
             error ||= new Error("Sorry #{name}, you are not authorized to access this application")
             next(error)
 
@@ -157,7 +157,7 @@ octolog = (config, logger)->
         try
           members = JSON.parse(body).map((m)-> m.login)
           if members.indexOf(user.login) >= 0
-            logger.debug "#{login} is a member of team #{team_id}" if logger
+            logger.debug "#{user.login} is a member of team #{team_id}" if logger
             callback null, team_id
             return
         catch error # you can never tell wh
