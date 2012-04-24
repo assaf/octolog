@@ -1,8 +1,11 @@
 { "name": "octolog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Github is our single sign-on octopus",
   "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
   "main": "index",
+  "bin": {
+    "octolog": "./bin/octolog"
+  },
   "scripts": {
     "start":  "node server.js example/config.test.json"
   },
