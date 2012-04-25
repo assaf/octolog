@@ -16,7 +16,7 @@ Building code with Maven?  No thank you.
 
 What if there was an existing service users can authenticate with, and it uses
 OAuth so they can authorize individual application, and it has a way of editing
-users into roles, so we can manage access by role instead of individual logins? 
+users into roles, so we can manage access by role instead of individual logins. 
 
 Well, everyone on the team uses Github so they're already logged into that site,
 and Github supports OAuth 2.0 (the easy OAuth) and its V3 API allows us to check
@@ -65,7 +65,7 @@ For example:
     "/settings*"
   ],
   "authorize": {
-    "login": ["assaf"]
+    "logins": ["assaf"]
   },
   "github": {
     "client_id":      "8fa9b2a82cb28fb664a4",
@@ -162,7 +162,7 @@ For example:
     "force":  true
   },
   "authorize": {
-    "login": ["assaf"]
+    "logins": ["assaf"]
   },
   "github": {
     "client_id":      "8fa9b2a82cb28fb664a4",

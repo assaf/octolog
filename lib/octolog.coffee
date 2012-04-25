@@ -26,8 +26,8 @@ octolog = (config, logger)->
     throw new Error("OAuth not going to work without github.client_secret")
 
   # Authorize these logins and teams
-  logins = Util.toArray(config.authorize.login)
-  teams = Util.toArray(config.authorize.team)
+  logins = Util.toArray(config.authorize.logins)
+  teams = Util.toArray(config.authorize.teams)
   unless logins || teams
     throw new Error("You must authorize at least one user or team")
 

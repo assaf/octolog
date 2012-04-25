@@ -9,7 +9,7 @@
     "key":   "example/ssl.key"
   },
   "authorize": {
-    "login": ["assaf"]
+    "logins": ["assaf"]
   },
   "github": {
     "client_id":      "8fa9b2a82cb28fb664a4",
