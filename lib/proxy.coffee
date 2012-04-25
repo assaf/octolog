@@ -1,6 +1,7 @@
 Connect       = require("connect")
 Cookies       = require("cookies")
 File          = require("fs")
+HTTP          = require("http")
 QS            = require("querystring")
 Keygrip       = require("keygrip")
 Request       = require("request")
@@ -143,6 +144,26 @@ proxy = (config)->
   port = Util.port(config)
   server.listen port, ->
     logger.info "Listening in port #{port}"
+
+
+  # List on port 80 and redirect traffic to HTTPS port
+  if config.ssl?.force
+    http = HTTP.createServer()
+    http.on "request", (req, res)->
+      { pathname, search } = URL.parse(req.url)
+      url = URL.format(
+        protocol: "https:"
+        hostname:  req.headers.host.split(":")[0]   
+        port:      port
+        pathname:  pathname
+        search:    search
+      )
+      res.writeHead 301, "Redirecting",
+        "Location": url
+      res.end()
+    http.listen 80, ->
+      logger.info "Listening in port 80 and redirecting to #{port}"
+
 
   return server
 

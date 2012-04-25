@@ -94,6 +94,8 @@ The configuration options are as follows:
   (HTTPS).
 * `ssl` - If you want to use SSL (HTTPS), set `ssl.key` and `ssl.cert` to the
   paths of the SSL key and certificate files respectively.
+* `ssl.force` - If true, listens on port 80 and redirect all traffic to the
+  specified port (default to 443).
 * `application` - The URL for the application you're proxying.  Must specify the
   protocol, hostname and port, for example: "http://localhost:3000".
 * `protect` - Request paths that require authentication.  Can be a string or an
@@ -134,6 +136,43 @@ For example, to require authentication for all paths except API and home page:
   "-/api",
   "*"
 ]
+```
+
+
+## Using HTTPS
+
+You can tell the proxy to use HTTPS by setting `ssl.cert` and `ssl.key` to the
+paths of the SSL certificate and key files respectively.  If unspecified, it
+will default to using port 443.
+
+You can also set the `ssl.force` option to true.  This will tell the Octolog to
+listen on port 80, but redirect all requests to use HTTPS instead.
+
+For example:
+
+```
+{ "application": "https://localhost:3000",
+  "protect": [
+    "/graphs*",
+    "/settings*"
+  ],
+  "ssl": {
+    "cert":   "ssl.cert",
+    "key":    "ssl.key",
+    "force":  true
+  },
+  "authorize": {
+    "login": ["assaf"]
+  },
+  "github": {
+    "client_id":      "8fa9b2a82cb28fb664a4",
+    "client_secret":  "204093f4739fbe8e9b07cfa16b5cfd70fca5bf66"
+  },
+  "cookies": {
+    "expires": 60,
+    "secret":  "9c7516780b8bc00b523c565bb20980ee0865dcfc"
+  }
+}
 ```
 
 
@@ -193,6 +232,6 @@ You can also kick, I mean, log them out by redirecting the user to
 were redirected from.
 
 
-## Other
+## License
 
 MIT license.

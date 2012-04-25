@@ -1,4 +1,7 @@
-Simple configuration and echo server.
+# Example for proxy and HTTPS
+
+
+## Echo server
 
 To run the echo server:
 
@@ -22,13 +25,16 @@ like this:
 }
 ```
 
-Edit the configuration file `example/config.test.json` to make sure your Github
+
+## Proxy
+
+Edit the configuration file `example/proxy.json` to make sure your Github
 login is listed as authorized login.
 
 Now run the Octolog server with this configuration:
 
 ```
-./bin/octolog example/config.test.json
+./bin/octolog example/proxy.json
 ```
 
 If you open your browser to [http://localhost:8000/](http://localhost:8000/) you
@@ -42,4 +48,29 @@ and you will notice that four more `x-github` headers show up.
 Sign out by going to
 [/_octolog/disconnect](http://localhost:8000/_octolog/disconnect) and you will
 notice these headers are no longer there.
+
+
+## HTTPS
+
+Edit the configuration file `example/https.json` to make sure your Github
+login is listed as authorized login.
+
+Now run the Octolog server with this configuration:
+
+```
+sudo ./bin/octolog example/https.json
+```
+
+You will need `sudo` in order to listen on both ports 80 and 443.
+
+If you open your browser to [http://localhost/](http://localhost/) you will be
+redirected immediately to [https://localhost/](https://localhost/).  Since the
+example SSL certificate is self-signed, you will see a warning message.
+
+If you instruct the browser to proceed, it will make the same request again only
+this time using HTTPS and the request will hit the proxy.  The rest (connecting
+and disconnecting) should work as above.
+
+In production, when you use a proper SSL certificate, this redirect flow is
+transparent to the user.
 
