@@ -153,7 +153,7 @@ proxy = (config)->
       { pathname, search } = URL.parse(req.url)
       url = URL.format(
         protocol: "https:"
-        hostname:  req.headers.host.split(":")[0]   
+        hostname:  (req.headers.host || "").split(":")[0]   
         port:      port
         pathname:  pathname
         search:    search
