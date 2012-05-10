@@ -150,10 +150,15 @@ proxy = (config)->
   if config.ssl?.force
     http = HTTP.createServer()
     http.on "request", (req, res)->
+      unless req.headers.host
+        res.writeHead 400, "Bad Request",
+        res.end("Missing Host header")
+        return
+
       { pathname, search } = URL.parse(req.url)
       url = URL.format(
         protocol: "https:"
-        hostname:  (req.headers.host || "").split(":")[0]   
+        hostname:  req.headers.host.split(":")[0]
         port:      port
         pathname:  pathname
         search:    search

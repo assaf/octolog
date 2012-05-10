@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* vim: set filetype=javascript : */
 var Coffee  = require("coffee-script"),
-    File    = require("fs");
+    File    = require("fs"),
+    fork    = require("child_process").fork;
 
 
 var USAGE = ""
@@ -70,6 +71,27 @@ try {
   process.exit(2);
 }
 
-// Do it!
-proxy(config);
 
+// Restart in case of failure
+process.on("uncaughtException", function(error) {
+  process.stderr.write(error.stack);
+  process.stderr.write("\n\n");
+  console.log("Forking ", __filename, process.argv.slice(2))
+  var child = fork(__filename, process.argv.slice(2));
+  child.on("message", function(message) { 
+    console.log("Terminating parent");
+    process.exit(0);
+  })
+})
+
+
+// Tell parent we're up and running and wait for it to shutdown.
+if (process.send) {
+  process.send({});
+  setTimeout(function() {
+    proxy(config);
+  }, 100);
+} else {
+  // Do it!
+  proxy(config);
+}
