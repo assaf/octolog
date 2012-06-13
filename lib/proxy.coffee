@@ -1,10 +1,7 @@
 Connect       = require("connect")
-Cookies       = require("cookies")
 File          = require("fs")
 HTTP          = require("http")
 QS            = require("querystring")
-Keygrip       = require("keygrip")
-Request       = require("request")
 URL           = require("url")
 logger        = require("./logger")
 octolog       = require("./octolog")
@@ -137,6 +134,9 @@ proxy = (config)->
       for header of req.headers
         if /^x-github/i.test(header)
           delete req.headers[header]
+    # Support HTTP Basic authentication is specified in the application URL
+    if url.auth
+      req.headers["Authorization"] = "Basic #{new Buffer(url.auth).toString("base64")}"
     # Forward
     rev_proxy.proxyRequest(req, res)
 
