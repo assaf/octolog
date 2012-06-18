@@ -11,13 +11,13 @@ Util =
   # Given configuration object, request, optional path and query, return a URL
   # for redirecting back to proxy (e.g. redirect user to connect or OAuth
   # callback)
-  url: (config, req, path, query)->
+  url: (config, req, patams)->
     protocol = if config.ssl then "https:" else "http:"
     return URL.format(
       protocol: protocol
       host:     req.headers.host
-      pathname: path || "/"
-      query:    query
+      pathname: params.pathname || "/"
+      query:    params.query
     )
 
   # Convert value to array of strings.  Value may be a string or null.

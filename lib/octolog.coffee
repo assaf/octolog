@@ -1,6 +1,5 @@
 Cookies = require("cookies")
 Keygrip = require("keygrip")
-QS      = require("querystring")
 Request = require("request")
 URL     = require("url")
 Util    = require("./util")
@@ -54,9 +53,8 @@ octolog = (config, logger)->
   # of back to a safe place (/).
   redirect = (req, res)->
     # All this to get the return_to query parameter
-    url = URL.parse(req.url)
-    params = QS.parse(url.search?.slice(1))
-    return_to = params.return_to || Util.url(config, req, "/")
+    url = URL.parse(req.url, true)
+    return_to = url.query.return_to || Util.url(config, req, pathname: "/")
 
     res.setHeader "Location", return_to
     res.statusCode = 303 # Follow URL with a GET request
@@ -67,14 +65,13 @@ octolog = (config, logger)->
   startFlow = (req, res, next, url)->
     # At the end of the flow, we're going to take the user to the URL
     # specified by the query parameter or where they just came from
-    params = QS.parse(url.search?.slice(1))
-    return_to = params.return_to || req.headers.referer || "/"
-    redirect_uri = Util.url(config, req, CALLBACK_PATH, { return_to: return_to })
+    return_to = url.query.return_to || req.headers.referer || "/"
+    redirect_uri = Util.url(config, req, pathname: CALLBACK_PATH, query: { return_to: return_to })
 
     # We need 'repo' scope to list team members
     scope = "repo" if teams.length > 0
-    url = "https://github.com/login/oauth/authorize?" +
-      QS.stringify(client_id: config.github.client_id, redirect_uri: redirect_uri, scope: scope)
+    url = URL.format(protocol: "https", host: "github.com", pathname: "/login/oauth/authorize",
+      query: { client_id: config.github.client_id, redirect_uri: redirect_uri, scope: scope) })
       
     # This takes us to Github
     res.setHeader "Location", url
@@ -84,13 +81,11 @@ octolog = (config, logger)->
 
   # Got a response form the OAuth server
   callback = (req, res, next, url)->
-    params = QS.parse(url.search?.slice(1))
-
     # Let's exchange OAuth code for access token
     request =
       url: "https://github.com/login/oauth/access_token"
       json:
-        code:           params.code
+        code:           url.query.code
         client_id:      config.github.client_id
         client_secret:  config.github.client_secret
     Request.post request, (error, response, json)->
@@ -199,7 +194,7 @@ octolog = (config, logger)->
 
   # All the magic happens here
   handler = (req, res, next)->
-    url = URL.parse(req.url)
+    url = URL.parse(req.url, true)
     switch url.pathname
       when CONNECT_PATH
         startFlow(req, res, next, url)

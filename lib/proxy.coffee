@@ -111,7 +111,8 @@ proxy = (config)->
       if path.match(pathname)
         if path.protect
           # This path requires authentication
-          res.setHeader "Location", Util.url(config, req, "/_octolog/connect")
+          return_to = Util.url(config, req, URL.parse(req.url, true))
+          res.setHeader "Location", Util.url(config, req, pathname: "/_octolog/connect", query: { return_to: return_to })
           res.statusCode = 303 # Follow URL with a GET request
           res.end("You need to login with Github and authorize to access this page")
         else
