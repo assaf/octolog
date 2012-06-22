@@ -70,8 +70,8 @@ octolog = (config, logger)->
 
     # We need 'repo' scope to list team members
     scope = "repo" if teams.length > 0
-    url = URL.format(protocol: "https", host: "github.com", pathname: "/login/oauth/authorize",
-      query: { client_id: config.github.client_id, redirect_uri: redirect_uri, scope: scope) })
+    query = { client_id: config.github.client_id, redirect_uri: redirect_uri, scope: scope }
+    url = URL.format(protocol: "https", host: "github.com", pathname: "/login/oauth/authorize", query: query)
       
     # This takes us to Github
     res.setHeader "Location", url

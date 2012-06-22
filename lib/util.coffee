@@ -11,7 +11,7 @@ Util =
   # Given configuration object, request, optional path and query, return a URL
   # for redirecting back to proxy (e.g. redirect user to connect or OAuth
   # callback)
-  url: (config, req, patams)->
+  url: (config, req, params)->
     protocol = if config.ssl then "https:" else "http:"
     return URL.format(
       protocol: protocol
