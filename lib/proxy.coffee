@@ -157,7 +157,7 @@ proxy = (config)->
         return
 
       { pathname, search } = URL.parse(req.url)
-      url = URL.format(
+      redirect = URL.format(
         protocol: "https:"
         hostname:  req.headers.host.split(":")[0]
         port:      port
@@ -165,7 +165,7 @@ proxy = (config)->
         search:    search
       )
       res.writeHead 301, "Redirecting",
-        "Location": url
+        "Location": redirect
       res.end()
     http.listen 80, ->
       logger.info "Listening in port 80 and redirecting to #{port}"
