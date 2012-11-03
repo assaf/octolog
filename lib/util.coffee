@@ -13,7 +13,7 @@ Util =
   # callback)
   url: (config, req, params)->
     protocol = if config.ssl then "https:" else "http:"
-    host = if req.headers["x-forwarded-host"] then req.headers["x-forwarded-host"] else req.headers.host
+    host = req.headers["x-forwarded-host"] || req.headers.host
     return URL.format(
       protocol: protocol
       host:     host
