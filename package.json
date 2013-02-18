@@ -1,5 +1,5 @@
 { "name": "octolog",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Github is our single sign-on octopus",
   "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
   "main": "index",
