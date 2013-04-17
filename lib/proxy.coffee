@@ -1,6 +1,7 @@
 Connect       = require("connect")
 File          = require("fs")
 HTTP          = require("http")
+HTTPS         = require("https")
 QS            = require("querystring")
 URL           = require("url")
 logger        = require("./logger")
@@ -74,13 +75,20 @@ proxy = (config)->
   )
 
   # The Connect server
+  # By default listen on port 80, 443 for HTTPS
+  port= Util.port(config)
   if config.ssl
-    https =
+    options =
       key:  File.readFileSync(config.ssl.key, "utf8")
       cert: File.readFileSync(config.ssl.cert, "utf8")
-    server = Connect.createServer(https)
+      rejectUnauthorized: false
+    server= Connect()
+    HTTPS.createServer(options, server).listen(port)
+    logger.info "server= #{server}"
   else
-    server = Connect.createServer()
+    server= Connect()
+    HTTP.createServer(options, server).listen(port)
+  logger.info "Listening on port #{port}"
 
   # Log all requests.
   server.use (req, res, next)->
@@ -141,10 +149,9 @@ proxy = (config)->
     # Forward
     rev_proxy.proxyRequest(req, res)
 
-  # By default listen on port 80, 443 for HTTPS
-  port = Util.port(config)
-  server.listen port, ->
-    logger.info "Listening in port #{port}"
+
+  server.on "error", (err) ->
+   logger.info "server error #{err}"
 
 
   # List on port 80 and redirect traffic to HTTPS port
