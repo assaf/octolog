@@ -100,8 +100,13 @@ octolog = (config, logger)->
       # We win one OAuth access token
       token = json.access_token
       # Get the login, user name and gravatar ID
-      url = "https://api.github.com/user?access_token=#{token}"
-      Request.get url, (error, response, body)->
+      options = {
+        "url":     "https://api.github.com/user?access_token=#{token}"
+        "headers": {
+          "User-Agent": "octolog 1.4.7"
+        }
+      }
+      Request.get options, (error, response, body)->
         if error
           logger.error error if logger
           next(error)
