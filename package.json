@@ -1,28 +1,32 @@
-{ "name": "octolog",
+{
+  "name": "octolog",
   "version": "1.2.7",
   "description": "Github is our single sign-on octopus",
-  "author": "Assaf Arkin <assaf@labnotes.org> (http://labnotes.org/)",
+  "author": {
+    "name": "Assaf Arkin",
+    "email": "assaf@labnotes.org",
+    "url": "http://labnotes.org/"
+  },
   "main": "index",
   "bin": {
     "octolog": "./bin/octolog"
   },
   "scripts": {
-    "start":  "node server.js example/config.test.json"
+    "start": "node server.js example/config.test.json"
   },
   "engines": {
     "node": ">= 0.6.0"
   },
   "dependencies": {
-    "coffee-script":    "~1.3.1",
-    "cookies":          "~0.3.0",
-    "connect":          "~2.4.2",
-    "http-proxy":       "~0.8.2",
-    "keygrip":          "~0.2.2",
-    "request":          "~2.10.0",
-    "winston":          "~0.6.2"
+    "coffee-script": ">=1.3.1",
+    "cookies": ">=0.3.0",
+    "connect": ">=2.4.2",
+    "http-proxy": ">=0.8.2",
+    "keygrip": ">=0.2.2",
+    "request": ">=2.10.0",
+    "winston": ">=0.6.2"
   },
-  "devDependencies": {
-  },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "http://github.com/assaf/octolog"
@@ -31,8 +35,13 @@
     "url": "http://github.com/assaf/octolog/issues"
   },
   "licenses": [
-    { "type": "MIT",
+    {
+      "type": "MIT",
       "url": "http://github.com/assaf/octolog/blob/master/MIT-LICENSE"
     }
-  ]
+  ],
+  "readme": "# The Octolog\n\nUsing Github for single sign-on.\n\n\n## Say What?\n\nWe have a bunch of apps deployed on the cloud: Graphite for metrics, Sensu for\nchecks, Kibana for logging, Vanity for split testing, and a few more.  We wanted\nsome way to log into each service without having to manage accounts on each and\nevery server.\n\nWe looked at open source SSO protocols like CAS, CoSign and Pubcookie but they\nall looked so ... complicated.  Editing XML files?  Setting up CGI scripts?\nBuilding code with Maven?  No thank you.\n\nWhat if there was an existing service users can authenticate with, and it uses\nOAuth so they can authorize individual application, and it has a way of editing\nusers into roles, so we can manage access by role instead of individual logins. \n\nWell, everyone on the team uses Github so they're already logged into that site,\nand Github supports OAuth 2.0 (the easy OAuth) and its V3 API allows us to check\nwhether a person belongs to a team.  So all that's left is building a simple\nsign-on reverse proxy, and so Octolog was born.\n\n\n## How Does It Work?\n\nYou setup Octolog as reverse proxy in front of your Web application, that same\nway you would use Nginx or Apache as reverse proxy, but with less to configure.\n\nOctolog supports HTTP/S 1.1 including wonderful features like streaming, Server\nSent Events and Web Sockets.  Basically anything the wonderful\n[node-http-proxy](https://github.com/nodejitsu/node-http-proxy) can do.  And\nit's written in Node.js, so expect great performance and as many open\nconnections as you need.\n\nWhen a request hits Octolog, it looks for a signed cookie that tells it you're\nauthenticated and authorized.  If the cookie is not there, it redirects you to\nGithub and asks you to login there and authorize the application.\n\nGithub then redirects back to Octolog, which checks that the token is valid, and\nthat you're account is listed as one of the authorized logins, or belongs to one\nof the authorized teams.\n\nIf either checks passes, it sends back a signed cookie with account details and\nredirect you to the original request you made.  Since future requests will send\nback the same cookie, you are now authorized until the cookie expires.\n\n\n## As A Proxy\n\nTo run as a proxy, create a configuration file with your Github application\ncredentials, authorized logins/teams, and the URL of the proxied application.\n\nYou can also indicate which URLs require authentication.  If unspecified,\nauthentication is required for all URLs (essentially `*`).\n\nFor example:\n\n```\n{ \"application\": \"https://localhost:3000\",\n  \"protect\": [\n    \"/graphs*\",\n    \"/settings*\"\n  ],\n  \"authorize\": {\n    \"logins\": [\"assaf\"]\n  },\n  \"github\": {\n    \"client_id\":      \"8fa9b2a82cb28fb664a4\",\n    \"client_secret\":  \"204093f4739fbe8e9b07cfa16b5cfd70fca5bf66\"\n  },\n  \"cookies\": {\n    \"expires\": 60,\n    \"secret\":  \"9c7516780b8bc00b523c565bb20980ee0865dcfc\"\n  }\n}\n```\n\nIf the user authenticates, your application will see the following HTTP headers:\n\n* `X-Github-Login` - The user's login\n* `X-Github-Name` - Their full name\n* `X-Github-Gravatar` - Their gravatar identifier\n* `X-Github-Token` - Their OAuth token\n\n\n## Configuration\n\nThe configuration options are as follows:\n\n* `port` - The port this proxy is listening on.  Defaults to 80 (HTTP) or 443\n  (HTTPS).\n* `ssl` - If you want to use SSL (HTTPS), set `ssl.key` and `ssl.cert` to the\n  paths of the SSL key and certificate files respectively.\n* `ssl.force` - If true, listens on port 80 and redirect all traffic to the\n  specified port (default to 443).\n* `application` - The URL for the application you're proxying.  Must specify the\n  protocol, hostname and port, for example: \"http://localhost:3000\".\n* `protect` - Request paths that require authentication.  Can be a string or an\n  array of strings.  If not specified, the default behavior is to protect all\n  URLs (same as `[\"*\"]`).\n* `authorize.logins` - Authorize all users listed by their Github login.  Can be\n  string or array of strings.\n* `authorize.teams` - Authorize all teams listed by their team identifier.  Can\n  be string or array of strings.\n* `github.client_id` - The Github application's client identifier.\n* `github.client_secret` - The Github application's client secret.\n* `cookies.expires` - Sets how long (in minutes) before cookie expires and user has to login\n  again.  If missing, cookie expires at the end of the session.\n* `cookie.secret` - Secret value used to digitally sign the cookie.  If missing,\n  uses a random value that may change when you re-install or upgrade the proxy.\n\nFor OAuth to work, you have to [register a Github\napplication](https://github.com/settings/applications) and use its client ID and\nsecret in the configuration.\n\nThe callback URL must be the same protocol, host and port as the proxy server.\nFor example, the test application is registered with the callback URL of\n`http://localhost:8000`, and so you can only use it when the proxy is running on\nlocalhost port 8000.\n\nWhen specifying which resources to protect:\n- Exact paths are matched against the URL.\n- Partial matches are allowed by ending the path with `*`.\n- You can require authentication for a path by prefixing it with `+`\n- You can ignore authentication for a path by prefixing it with `-`\n- The first match takes precedence\n\nFor example, to require authentication for all paths except API and home page:\n\n```\n\"protect\": [\n  \"-/\",\n  \"-/api\",\n  \"*\"\n]\n```\n\n\n## Using HTTPS\n\nYou can tell the proxy to use HTTPS by setting `ssl.cert` and `ssl.key` to the\npaths of the SSL certificate and key files respectively.  If unspecified, it\nwill default to using port 443.\n\nYou can also set the `ssl.force` option to true.  This will tell the Octolog to\nlisten on port 80, but redirect all requests to use HTTPS instead.\n\nFor example:\n\n```\n{ \"application\": \"https://localhost:3000\",\n  \"protect\": [\n    \"/graphs*\",\n    \"/settings*\"\n  ],\n  \"ssl\": {\n    \"cert\":   \"ssl.cert\",\n    \"key\":    \"ssl.key\",\n    \"force\":  true\n  },\n  \"authorize\": {\n    \"logins\": [\"assaf\"]\n  },\n  \"github\": {\n    \"client_id\":      \"8fa9b2a82cb28fb664a4\",\n    \"client_secret\":  \"204093f4739fbe8e9b07cfa16b5cfd70fca5bf66\"\n  },\n  \"cookies\": {\n    \"expires\": 60,\n    \"secret\":  \"9c7516780b8bc00b523c565bb20980ee0865dcfc\"\n  }\n}\n```\n\n\n## Connect/Express Middleware\n\nMost of the logic is handled by the `octolog` function which returns a Connect\nrequest handler.   You can use it inside your application instead of a proxy.\n\nFor example:\n\n```\noctolog = require(\"octolog\")\n\nserver.use octolog({\n  authorize: {\n    logins: \"assaf\"\n  },\n  \"github\": {\n    \"client_id\":      \"8fa9b2a82cb28fb664a4\",\n    \"client_secret\":  \"204093f4739fbe8e9b07cfa16b5cfd70fca5bf66\"\n  }\n});\n```\n\nIf the user is authenticated, the user object becomes available from the request\nproperty `_user`.  This object provides the Github `login`, full `name`,\n`gravatar_id` and OAuth `token`.\n\nFor example:\n\n```\n<span class=\"user\">\n  <a href=\"https://github.com/<%= @user.login %>\">\n    <img src=\"https://secure.gravatar.com/avatar/<%= @user.gravatar_id %>\"><%= @user.name %>\n  </a>\n</span>\n```\n\nTo get users to Github connect, redirect them to `/_octolog/connect`, for example:\n\n```\nfunction login(req, res, next) {\n  if (req._user) {\n    next();\n  } else {\n    res.redirect(\"/_octolog/connect\");\n  }\n}\n\nserver.get(\"/settings\", login, function(req, res) {\n  ...\n})\n```\n\nYou can also kick, I mean, log them out by redirecting the user to\n`_octolog/disconnect`.  Both redirects would take the user back to the URL they\nwere redirected from.\n\n\n## License\n\nMIT license.\n",
+  "readmeFilename": "README.md",
+  "_id": "octolog@1.2.7",
+  "_from": "octolog@"
 }
