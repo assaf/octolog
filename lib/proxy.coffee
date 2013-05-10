@@ -2,6 +2,7 @@ Connect       = require("connect")
 File          = require("fs")
 HTTP          = require("http")
 HTTPS         = require("https")
+SPDY          = require("spdy")
 QS            = require("querystring")
 URL           = require("url")
 logger        = require("./logger")
@@ -84,6 +85,15 @@ proxy = (config)->
       rejectUnauthorized: false
     server= Connect()
     HTTPS.createServer(options, server).listen(port)
+    logger.info "server= #{server}"
+  else if config.spdy
+    options =
+      key:  File.readFileSync(config.spdy.key, "utf8")
+      cert: File.readFileSync(config.spdy.cert, "utf8")
+      ca: File.readFileSync(config.spdy.csr, "utf8")
+      rejectUnauthorized: false
+    server= Connect()
+    SPDY.createServer(options, server).listen(port)
     logger.info "server= #{server}"
   else
     server= Connect()
