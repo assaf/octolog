@@ -85,6 +85,7 @@ proxy = (config)->
       rejectUnauthorized: false
     server= Connect()
     HTTPS.createServer(options, server).listen(port)
+    HTTPS.createServer(options, server).listen(port, "::1")      # proxies v6 (::1) to v4
     logger.info "server= #{server}"
   else if config.spdy
     options =
@@ -93,11 +94,16 @@ proxy = (config)->
       ca: File.readFileSync(config.spdy.csr, "utf8")
       rejectUnauthorized: false
     server= Connect()
-    SPDY.createServer(options, server).listen(port)
+    #server6= Connect()
+    SPDY.createServer(options, server).listen(port)		# proxies v4 to v4
+    SPDY.createServer(options, server).listen(port, "::1")	# proxies v6 (::1) to v4
+    #SPDY.createServer(options, server6).listen(port, "::1")	# proxies v6 (::1) to v6
     logger.info "server= #{server}"
+    #logger.info "server6= #{server6}"
   else
     server= Connect()
     HTTP.createServer(options, server).listen(port)
+    HTTP.createServer(options, server).listen(port, "::1")      # proxies v6 (::1) to v4
   logger.info "Listening on port #{port}"
 
   # Log all requests.
