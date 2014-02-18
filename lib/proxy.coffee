@@ -8,7 +8,7 @@ URL           = require("url")
 logger        = require("./logger")
 octolog       = require("./octolog")
 Util          = require("./util")
-{ HttpProxy } = require("http-proxy")
+HttpProxy     = require("http-proxy")
 
 ###
 var options = {
@@ -68,7 +68,7 @@ proxy = (config)->
 
   # The reverse proxy
   url = URL.parse(config.application)
-  rev_proxy = new HttpProxy(
+  rev_proxy = HttpProxy.createProxyServer(
     target:
       host:   url.hostname
       port:   url.port
