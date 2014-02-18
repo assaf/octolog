@@ -2,12 +2,13 @@ Connect       = require("connect")
 File          = require("fs")
 HTTP          = require("http")
 HTTPS         = require("https")
+SPDY          = require("spdy")
 QS            = require("querystring")
 URL           = require("url")
 logger        = require("./logger")
 octolog       = require("./octolog")
 Util          = require("./util")
-{ HttpProxy } = require("http-proxy")
+HttpProxy     = require("http-proxy")
 
 ###
 var options = {
@@ -67,7 +68,7 @@ proxy = (config)->
 
   # The reverse proxy
   url = URL.parse(config.application)
-  rev_proxy = new HttpProxy(
+  rev_proxy = HttpProxy.createProxyServer(
     target:
       host:   url.hostname
       port:   url.port
@@ -84,10 +85,25 @@ proxy = (config)->
       rejectUnauthorized: false
     server= Connect()
     HTTPS.createServer(options, server).listen(port)
+    HTTPS.createServer(options, server).listen(port, "::1")      # proxies v6 (::1) to v4
     logger.info "server= #{server}"
+  else if config.spdy
+    options =
+      key:  File.readFileSync(config.spdy.key, "utf8")
+      cert: File.readFileSync(config.spdy.cert, "utf8")
+      ca: File.readFileSync(config.spdy.csr, "utf8")
+      rejectUnauthorized: false
+    server= Connect()
+    #server6= Connect()
+    SPDY.createServer(options, server).listen(port)		# proxies v4 to v4
+    SPDY.createServer(options, server).listen(port, "::1")	# proxies v6 (::1) to v4
+    #SPDY.createServer(options, server6).listen(port, "::1")	# proxies v6 (::1) to v6
+    logger.info "server= #{server}"
+    #logger.info "server6= #{server6}"
   else
     server= Connect()
     HTTP.createServer(options, server).listen(port)
+    HTTP.createServer(options, server).listen(port, "::1")      # proxies v6 (::1) to v4
   logger.info "Listening on port #{port}"
 
   # Log all requests.

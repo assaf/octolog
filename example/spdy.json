@@ -1,0 +1,23 @@
+{ "application": "http://localhost:3000",
+  "protect": [
+    "/graphs*",
+    "/settings*"
+  ],
+  "spdy": {
+    "force": true,
+    "cert":  "example/ssl.cert",
+    "key":   "example/ssl.key",
+    "csr":   "example/ssl.csr"
+  },
+  "authorize": {
+    "logins": ["assaf"]
+  },
+  "github": {
+    "client_id":      "8fa9b2a82cb28fb664a4",
+    "client_secret":  "204093f4739fbe8e9b07cfa16b5cfd70fca5bf66"
+  },
+  "cookies": {
+    "expires": 60,
+    "secret":  "9c7516780b8bc00b523c565bb20980ee0865dcfc"
+  }
+}
